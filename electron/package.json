@@ -1,0 +1,36 @@
+{
+  "name": "moodhub-electron",
+  "version": "0.2.0",
+  "description": "MoodHub desktop shell (Electron)",
+  "homepage": "https://github.com/moodhub/moodhub",
+  "author": {
+    "name": "MoodHub Dev",
+    "email": "dev@moodhub.local"
+  },
+  "main": "main.js",
+  "private": true,
+  "devDependencies": {
+    "electron": "^32.0.0",
+    "electron-builder": "^25.0.5"
+  },
+  "build": {
+    "appId": "com.moodhub.app",
+    "productName": "MoodHub",
+    "files": ["main.js", "../dist/**/*"],
+    "directories": {
+      "output": "../release"
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Utility",
+      "maintainer": "MoodHub Dev <dev@moodhub.local>"
+    },
+    "win": {
+      "target": ["nsis", "portable"]
+    },
+    "mac": {
+      "target": ["dmg", "zip"],
+      "category": "public.app-category.healthcare-fitness"
+    }
+  }
+}
