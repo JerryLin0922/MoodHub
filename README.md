@@ -128,6 +128,4 @@ moodhub/
 ```
 
 ## License
-
 MIT
-*（内容由AI生成，仅供参考）*
