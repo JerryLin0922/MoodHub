@@ -138,13 +138,19 @@ export const storage = {
       console.warn('[MoodHub] failed to persist AI settings', e);
     }
 
-    // API key routing.
-    if (settings.persistKey) {
-      localStorage.setItem(K.aiKeyLocal, apiKey);
-      sessionStorage.removeItem(K.aiKeySession);
-    } else {
-      sessionStorage.setItem(K.aiKeySession, apiKey);
-      localStorage.removeItem(K.aiKeyLocal);
+    // API key routing with quota-safety: when the persistent store is full or
+    // unavailable, keep the key in the current tab's session scope instead of
+    // letting the write throw and break the settings screen.
+    try {
+      if (settings.persistKey) {
+        localStorage.setItem(K.aiKeyLocal, apiKey);
+        sessionStorage.removeItem(K.aiKeySession);
+      } else {
+        sessionStorage.setItem(K.aiKeySession, apiKey);
+        localStorage.removeItem(K.aiKeyLocal);
+      }
+    } catch (e) {
+      console.warn('[MoodHub] failed to persist API key, keeping it in-memory only', e);
     }
   },
 

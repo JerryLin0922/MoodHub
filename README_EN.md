@@ -1,3 +1,14 @@
+---
+AIGC:
+    Label: "1"
+    ContentProducer: 001191440300708461136T1XGW3
+    ProduceID: 01f8f8ba8e1924f80ffb2088ef932ff7_a1861f62b9b811f1a1bf52540064ee0f
+    ReservedCode1: jCt2kCotyEH0+XGTq5DYKXGSXR0dF5O6zZLZtH0Qz00Nnrw9H1rQGxA7ygfDMv+7+GJ/y5jC8NzcAfJ8Mx+DUalN4cDOjdpbAZ9CXmvnp5sjMXnQf02CSX5PqQo/XrqzTspnNjRWJjOkFJdIAHUC/mquAt7TciDmbGT6UCaKL4EfTNfP5Yq1jISvR4c=
+    ContentPropagator: 001191440300708461136T1XGW3
+    PropagateID: 01f8f8ba8e1924f80ffb2088ef932ff7_a1861f62b9b811f1a1bf52540064ee0f
+    ReservedCode2: jCt2kCotyEH0+XGTq5DYKXGSXR0dF5O6zZLZtH0Qz00Nnrw9H1rQGxA7ygfDMv+7+GJ/y5jC8NzcAfJ8Mx+DUalN4cDOjdpbAZ9CXmvnp5sjMXnQf02CSX5PqQo/XrqzTspnNjRWJjOkFJdIAHUC/mquAt7TciDmbGT6UCaKL4EfTNfP5Yq1jISvR4c=
+---
+
 # MoodHub
 
 A local-first mental health companion and health data journal. All data stays on your device — nothing is uploaded to any server.
@@ -117,3 +128,4 @@ moodhub/
 ## License
 
 MIT
+*（内容由AI生成，仅供参考）*
