@@ -57,8 +57,6 @@ jobs:
         if: runner.os == 'macOS'
         working-directory: electron
         env:
-          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
         run: npx electron-builder --mac dmg zip
 
@@ -99,7 +97,7 @@ jobs:
       - name: Build web
         run: npm run build
       - name: Sync Capacitor Android
-        run: npx cap add android && npx cap sync android
+        run: npm pkg delete overrides.tar && npm i && npx cap add android && npx cap sync android
       - name: Build APK (debug)
         working-directory: android
         run: ./gradlew assembleDebug
@@ -123,7 +121,7 @@ jobs:
       - name: Build web
         run: npm run build
       - name: Add & sync Capacitor iOS
-        run: npm i -D @capacitor/ios@6.2.2 && npx cap add ios && npx cap sync ios
+        run: npm pkg delete overrides.tar && npm i && npm i -D @capacitor/ios@6.2.2 && npx cap add ios && npx cap sync ios
       - name: Build iOS simulator app (unsigned)
         working-directory: ios/App
         run: xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
