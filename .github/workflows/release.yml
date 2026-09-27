@@ -122,7 +122,7 @@ jobs:
       - name: Build web
         run: npm run build
       - name: Add & sync Capacitor iOS
-        run: npx cap add ios && npx cap sync ios
+        run: npm i -D @capacitor/ios && npx cap add ios && npx cap sync ios
       - name: Build iOS simulator app (unsigned)
         working-directory: ios/App
         run: xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
