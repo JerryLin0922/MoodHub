@@ -79,9 +79,66 @@ jobs:
             release/*.zip
             release/*.exe
 
+  build-android:
+    name: Package Android APK
+    needs: build-web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build web
+        run: npm run build
+      - name: Sync Capacitor Android
+        run: npx cap sync android
+      - name: Build APK (debug)
+        working-directory: android
+        run: ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-android
+          path: android/app/build/outputs/apk/debug/*.apk
+
+  build-ios:
+    name: Package iOS (unsigned archive)
+    needs: build-web
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Build web
+        run: npm run build
+      - name: Add & sync Capacitor iOS
+        run: npx cap add ios && npx cap sync ios
+      - name: Build iOS simulator app (unsigned)
+        working-directory: ios/App
+        run: xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug -sdk iphonesimulator -derivedDataPath build CODE_SIGNING_ALLOWED=NO build
+      - name: Archive iOS app (unsigned)
+        working-directory: ios/App
+        run: xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -sdk iphoneos -derivedDataPath build CODE_SIGNING_ALLOWED=NO archive -archivePath build/MoodHub.xcarchive
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-ios
+          path: |
+            ios/App/build/Build/Products/Debug-iphonesimulator/*.app
+            ios/App/build/*.xcarchive
+
   publish:
     name: Publish GitHub Release
-    needs: release
+    needs: [release, build-android, build-ios]
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     steps:
