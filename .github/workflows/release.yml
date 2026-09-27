@@ -131,12 +131,17 @@ jobs:
       - name: Archive iOS app (unsigned)
         working-directory: ios/App
         run: xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -sdk iphoneos -derivedDataPath build CODE_SIGNING_ALLOWED=NO archive -archivePath build/MoodHub.xcarchive
+      - name: Zip iOS artifacts
+        working-directory: ios/App
+        run: |
+          ditto -c -k --keepParent build/Build/Products/Debug-iphonesimulator/App.app MoodHub-simulator.app.zip
+          ditto -c -k --keepParent build/MoodHub.xcarchive MoodHub-ios.xcarchive.zip
       - uses: actions/upload-artifact@v4
         with:
           name: release-ios
           path: |
-            ios/App/build/Build/Products/Debug-iphonesimulator/*.app
-            ios/App/build/*.xcarchive
+            ios/App/MoodHub-simulator.app.zip
+            ios/App/MoodHub-ios.xcarchive.zip
 
   publish:
     name: Publish GitHub Release
