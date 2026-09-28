@@ -13,6 +13,24 @@ interface ChatPayload {
   messages: { role: string; content: string }[];
 }
 
+/** AbortController-based timeout so a hung provider never blocks the UI. */
+const REQUEST_TIMEOUT_MS = 20_000;
+
+async function fetchWithTimeout(input: string, init: RequestInit = {}): Promise<Response> {
+  const ctrl = new AbortController();
+  const timer = window.setTimeout(() => ctrl.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    return await fetch(input, { ...init, signal: ctrl.signal });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') {
+      throw new Error('AI 请求超时（20s），已改用本地规则回复');
+    }
+    throw e;
+  } finally {
+    window.clearTimeout(timer);
+  }
+}
+
 /** Turn recent chat history into messages for the model. */
 function buildMessages(userText: string, history: ChatMessage[]): ChatPayload['messages'] {
   const system: string =
@@ -71,7 +89,7 @@ async function callOpenAICompatible(
     ? baseUrl
     : `${baseUrl}/chat/completions`;
 
-  const res = await fetch(url, {
+  const res = await fetchWithTimeout(url, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -102,7 +120,7 @@ async function callGemini(
     .filter(m => m.role !== 'system')
     .map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
 
-  const res = await fetch(url, {
+  const res = await fetchWithTimeout(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ contents }),

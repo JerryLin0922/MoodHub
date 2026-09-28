@@ -1,7 +1,10 @@
 import type { DailyAggregate, HealthSample } from './types';
 
+/** Numeric-only keys of {@link DailyAggregate} (excludes the date string). */
+type NumericAggregateKey = Exclude<keyof DailyAggregate, 'date'>;
+
 /** Metrics that are averaged across multiple samples in the same day. */
-const AVERAGED: (keyof DailyAggregate)[] = [
+const AVERAGED: NumericAggregateKey[] = [
   'sleepDuration',
   'sleepEfficiency',
   'restingHeartRate',
@@ -61,7 +64,9 @@ export function aggregateDaily(samples: HealthSample[]): DailyAggregate[] {
       for (const key of AVERAGED) {
         const arr = b[key];
         if (arr && arr.length) {
-          (day as any)[key] = arr.reduce((a, x) => a + x, 0) / arr.length;
+          // Narrow through the numeric-only key union so the assignment is type-safe.
+          (day as unknown as Record<NumericAggregateKey, number | undefined>)[key] =
+            arr.reduce((a, x) => a + x, 0) / arr.length;
         }
       }
     }

@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite --host",
     "build": "tsc --noEmit -p tsconfig.json && vite build",
+    "test": "vitest run",
     "preview": "vite preview",
     "pack": "bash pack.sh",
     "cap:sync": "npm run build && cap sync",
@@ -28,6 +29,11 @@
     "postcss": "^8.4.45",
     "tailwindcss": "^3.4.10",
     "typescript": "^5.5.4",
-    "vite": "^5.4.3"
+    "vite": "^7.3.6",
+    "vitest": "^5.0.2"
+  },
+  "overrides": {
+    "esbuild": "^0.25.0",
+    "tar": "^7.5.21"
   }
 }

@@ -45,30 +45,41 @@ const TYPE_ALIAS: Record<string, HealthMetricType> = {
  *   2) Generic:    [{ time, metric, value }]
  */
 export function parseJSON(text: string, source: HealthSource = 'json'): ParseResult {
-  const arr = JSON.parse(text);
+  let arr: unknown;
+  try {
+    arr = JSON.parse(text);
+  } catch (e) {
+    throw new Error(`JSON 解析失败：${e instanceof Error ? e.message : String(e)}`);
+  }
   if (!Array.isArray(arr)) throw new Error('JSON 顶层必须是数组');
 
   const samples: HealthSample[] = [];
   const skipped: string[] = [];
 
   for (const item of arr) {
-    const ts = normalizeTs(item.ts ?? item.time ?? item.startTime ?? item.date);
+    // Guard against null / primitive / malformed rows.
+    if (!item || typeof item !== 'object') continue;
+    const rec = item as Record<string, unknown>;
+
+    const ts = normalizeTs(
+      (rec.ts ?? rec.time ?? rec.startTime ?? rec.date) as string | undefined
+    );
     if (!ts) continue;
 
-    const rawType = String(item.type ?? item.metric ?? '').toLowerCase().trim();
+    const rawType = String(rec.type ?? rec.metric ?? '').toLowerCase().trim();
     const type = TYPE_ALIAS[rawType];
     if (!type) {
       if (rawType && !skipped.includes(rawType)) skipped.push(rawType);
       continue;
     }
 
-    let value = Number(item.value);
+    let value = Number(rec.value);
     if (!isFinite(value)) continue;
 
     // Convert hours to minutes when the alias or unit implies hours.
     if (
       type === 'sleep_duration' &&
-      (rawType === 'sleep_hours' || /hour|小时/i.test(String(item.unit ?? '')))
+      (rawType === 'sleep_hours' || /hour|小时/i.test(String(rec.unit ?? '')))
     ) {
       value *= 60;
     }
@@ -79,8 +90,8 @@ export function parseJSON(text: string, source: HealthSource = 'json'): ParseRes
       date: ts.slice(0, 10),
       type,
       value,
-      unit: item.unit ?? '',
-      source: item.source ?? source,
+      unit: String(rec.unit ?? ''),
+      source: (rec.source as HealthSource) ?? source,
     });
   }
 

@@ -73,18 +73,19 @@ export default function DataImport() {
 
   return (
     <div className="space-y-6">
-      <section className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-        <h2 className="text-sm font-semibold text-slate-500 mb-3">导入模式</h2>
-        <div className="flex gap-2">
+      <section className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-card border border-slate-100 dark:border-slate-700">
+        <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-3">导入模式</h2>
+        <div className="flex gap-2" role="group" aria-label="导入模式">
           {(['csv', 'json', 'manual'] as Mode[]).map(m => (
             <button
               key={m}
               onClick={() => setMode(m)}
+              aria-pressed={mode === m}
               className={
                 'px-4 py-1.5 rounded-full text-sm transition-colors ' +
                 (mode === m
-                  ? 'bg-slate-800 text-white'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200')
+                  ? 'bg-brand-600 text-white'
+                  : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600')
               }
             >
               {m === 'csv' ? 'CSV' : m === 'json' ? 'JSON' : '手动添加'}
@@ -94,11 +95,11 @@ export default function DataImport() {
       </section>
 
       {mode !== 'manual' && (
-        <section className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-          <h2 className="text-sm font-semibold text-slate-500 mb-3">
+        <section className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-card border border-slate-100 dark:border-slate-700">
+          <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-3">
             {mode === 'csv' ? '上传 CSV 文件' : '上传 JSON 文件'}
           </h2>
-          <p className="text-xs text-slate-400 mb-3">
+          <p className="text-xs text-slate-400 dark:text-slate-500 mb-3">
             {mode === 'csv'
               ? '支持时间列 + 指标列。识别：睡眠时长/效率、静息心率、心率、HRV、血氧、压力、步数、运动时长。'
               : '支持 [{ ts, type, value }] 或 [{ time, metric, value }]，type 支持 sleep_hours/sleep_minutes/rhr/hr/hrv 等别名。'}
@@ -108,30 +109,30 @@ export default function DataImport() {
             type="file"
             accept={mode === 'csv' ? '.csv,text/csv' : '.json,application/json'}
             onChange={onFile}
-            className="block w-full text-sm text-slate-500 file:mr-4 file:rounded-full file:border-0 file:bg-slate-800 file:text-white file:px-4 file:py-2 file:text-sm hover:file:bg-slate-700"
+            className="block w-full text-sm text-slate-500 dark:text-slate-400 file:mr-4 file:rounded-full file:border-0 file:bg-brand-600 file:text-white file:px-4 file:py-2 file:text-sm hover:file:bg-brand-700"
           />
         </section>
       )}
 
       {mode === 'manual' && (
-        <section className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100">
-          <h2 className="text-sm font-semibold text-slate-500 mb-3">手动添加一条记录</h2>
+        <section className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-card border border-slate-100 dark:border-slate-700">
+          <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-3">手动添加一条记录</h2>
           <div className="grid grid-cols-2 gap-3">
-            <label className="text-xs text-slate-500">
+            <label className="text-xs text-slate-500 dark:text-slate-400">
               日期
               <input
                 type="date"
                 value={mDate}
                 onChange={e => setMDate(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 px-3 py-2 text-sm"
               />
             </label>
-            <label className="text-xs text-slate-500">
+            <label className="text-xs text-slate-500 dark:text-slate-400">
               指标
               <select
                 value={mType}
                 onChange={e => setMType(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 px-3 py-2 text-sm"
               >
                 <option value="sleep_duration">睡眠时长（分钟）</option>
                 <option value="sleep_efficiency">睡眠效率（%）</option>
@@ -144,30 +145,31 @@ export default function DataImport() {
                 <option value="exercise_minutes">运动时长（分钟）</option>
               </select>
             </label>
-            <label className="text-xs text-slate-500">
+            <label className="text-xs text-slate-500 dark:text-slate-400">
               数值
               <input
                 type="number"
                 value={mValue}
                 onChange={e => setMValue(e.target.value)}
                 placeholder="例如 480"
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                aria-invalid={!!error && isNaN(parseFloat(mValue))}
+                className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 px-3 py-2 text-sm"
               />
             </label>
-            <label className="text-xs text-slate-500">
+            <label className="text-xs text-slate-500 dark:text-slate-400">
               单位（可选）
               <input
                 type="text"
                 value={mUnit}
                 onChange={e => setMUnit(e.target.value)}
                 placeholder="min / % / bpm"
-                className="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 px-3 py-2 text-sm"
               />
             </label>
           </div>
           <button
             onClick={submitManual}
-            className="mt-4 w-full rounded-full bg-slate-800 text-white py-2.5 text-sm hover:bg-slate-700"
+            className="mt-4 w-full rounded-full bg-brand-600 text-white py-2.5 text-sm hover:bg-brand-700"
           >
             添加记录
           </button>
@@ -175,11 +177,13 @@ export default function DataImport() {
       )}
 
       {error && (
-        <p className="text-sm text-red-500 bg-red-50 rounded-xl px-4 py-3">{error}</p>
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 rounded-xl px-4 py-3">
+          {error}
+        </p>
       )}
 
       {log && (
-        <div className="bg-emerald-50 text-emerald-700 rounded-xl px-4 py-3 text-sm">
+        <div role="status" className="bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-xl px-4 py-3 text-sm">
           <p>成功导入 {log.ok} 条记录。</p>
           {log.columns.length > 0 && (
             <ul className="mt-1 text-xs list-disc pl-4">

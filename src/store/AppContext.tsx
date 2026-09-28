@@ -134,6 +134,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  /** Persist the current dataset; moods are captured via closure. */
+  const persist = useCallback(
+    (messages: ChatMessage[]) => {
+      storage.save({ samples, moods, chat: messages });
+    },
+    [samples, moods]
+  );
+
   const sendMessage = useCallback(
     async (text: string) => {
       const trimmed = text.trim();
@@ -148,7 +156,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       const history = [...chatRef.current, userMsg];
       setChat(history);
-      storage.save({ samples, moods, chat: history });
+      persist(history);
 
       // 1) Rule engine always runs first and stays authoritative for crisis.
       const rule = buildReply(trimmed, aggregateDaily(samples));
@@ -170,7 +178,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           },
         ];
         setChat(messages);
-        storage.save({ samples, moods, chat: messages });
+        persist(messages);
         return;
       }
 
@@ -212,9 +220,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       const messages = [...history, reply];
       setChat(messages);
-      storage.save({ samples, moods, chat: messages });
+      persist(messages);
     },
-    [ai, samples]
+    [ai, persist]
   );
 
   const daily = useMemo(() => aggregateDaily(samples), [samples]);

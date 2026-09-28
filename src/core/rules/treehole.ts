@@ -25,8 +25,8 @@ const CRISIS_PATTERNS: RegExp[] = [
  */
 const SAFE_DENIAL = new RegExp(
   [
-    // "我不会 / 从没 / 根本没 + (再)?(去|想|要|打算|实施|做)? + 危机词"
-    /(?:不会|不可能|绝不|决不会|从未|从没|压根没|根本没|不打算|无意|并没有|不曾|未曾)(?:再)?(?:去|想|要|打算|实施|做)?(?:自杀|轻生|自残|自伤|伤害自己|弄死自己|跳楼|上吊|烧炭|割腕|服安眠药)/.source,
+    // "我不会 / 从没 / 根本没 / 不是 + (再)?(去|想|要|打算|实施|做)? + 危机词"
+    /(?:不会|不可能|不是|绝不|决不会|从未|从没|压根没|根本没|不打算|无意|并没有|不曾|未曾)(?:再)?(?:去|想|要|打算|实施|做)?(?:自杀|轻生|自残|自伤|伤害自己|弄死自己|跳楼|上吊|烧炭|割腕|服安眠药)/.source,
     // "没想过自杀 / 没想过"
     /没想(?:过)?(?:自杀|轻生|自残|自伤|伤害自己)?/.source,
     // "不想自杀 / 不想死 / 不想寻死" (explicitly NOT "不想活")
@@ -45,7 +45,9 @@ export function detectCrisis(text: string): boolean {
     const m = re.exec(t);
     if (!m) continue;
     const before = t.slice(0, m.index);
-    if (SAFE_DENIAL.test(before)) continue;
+    // Re-attach the matched crisis token before testing the denial regex:
+    // "我不会" alone is not a denial, "我不会自杀" is.
+    if (SAFE_DENIAL.test(before + m[0])) continue;
     return true;
   }
   return false;
