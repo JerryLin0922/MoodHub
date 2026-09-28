@@ -2,6 +2,7 @@
 
 > 更新日期：2026-09-28
 > MoodHub 的实体-类型-关系结构化视图，用于项目协作、知识管理与新人上手。
+> 本版纳入 2026-09 用户反馈与市场研究新增实体；可执行图谱见本地 `memory/ontology/graph.jsonl`（ontology skill）。
 
 ## 实体类型
 
@@ -9,14 +10,18 @@
 | --- | --- |
 | Project | MoodHub |
 | Platform | Web / Android / iOS / Windows / macOS / Linux / HarmonyOS(PWA) |
-| Feature | Overview / Diary / Import / TreeHole / AISettings / ScalePanel |
+| Feature | Overview / Diary / Import / TreeHole / AISettings / ScalePanel / ImportGuide / Gameplay / CompanionMode |
 | Tech | React 18 / TypeScript 5 / Vite 5 / Tailwind 3 / recharts / Electron / Capacitor 6 |
 | Standard | PHQ-9 / GAD-7 |
 | DataStore | localStorage / sessionStorage |
-| AIProvider | DeepSeek / Qwen / Tencent Hunyuan / Gemini / OpenAI / Custom(OpenAI-compatible) |
-| Doc | README / RESEARCH-2026 / ROADMAP-2026 / FIRST-PRINCIPLES / ANDROID / HARMONY |
-| Risk | 危机信号 / 数据隐私 / 未成年人合规 |
+| AIProvider | DeepSeek / Qwen / Tencent Hunyuan / Gemini / OpenAI / Custom(OpenAI-compatible) / LocalLLM(规划) |
+| Doc | README / RESEARCH-2026 / ROADMAP-2026 / FEEDBACK-2026 / FIRST-PRINCIPLES / ANDROID / HARMONY / ONTOLOGY |
+| Risk | 危机信号 / 数据隐私 / 未成年人合规 / 情感依赖 |
 | Regulation | CAC 拟人化互动服务办法（2026-07-15 施行）/ 加州 SB 243 / EU AI Act / 香港三层应急机制 |
+| UserFeedback | 日记趣味性不足（FB-2026-09-01）/ 导入无引导（FB-2026-09-02）/ 陪伴定位思考（FB-2026-09-03） |
+| Competitor | Finch / HeartGarden / Daylio / Voidpet / Wysa / Woebot / TalkspaceTee / 给力心理 / 旧纸树洞 / 同频树洞 / 知己CCBT / 林间疗愈 / PsychDiary / Reflectly / Stoic / HowWeFeel |
+| MarketTrend | 游戏化日记趋势 / 付费陪聊市场 / AI商业化教训 / 软硬融合 |
+| Evidence | ICITRI2025（游戏化日记 DASS-42 显著下降 p<0.05）/ Wysa 临床试验 8 项 |
 
 ## 核心关系
 
@@ -29,6 +34,12 @@
 - MoodHub --documents--> Doc
 - MoodHub --mitigates--> Risk
 - MoodHub --compliesWith--> Regulation（未成年人模式 / AI 身份标识 / 防依赖设计）
+- MoodHub --plans--> ImportGuide / Gameplay（回应反馈 FB-2026-09-01/02）
+- MoodHub --explores--> CompanionMode（回应反馈 FB-2026-09-03）
+- Gameplay --benchmarksAgainst--> Finch / HeartGarden / Daylio / Voidpet
+- Gameplay --supportedBy--> ICITRI2025
+- CompanionMode --benchmarksAgainst--> Wysa / TalkspaceTee / 给力心理
+- Competitor --demonstrates--> MarketTrend
 
 ## 领域知识映射
 
@@ -42,8 +53,13 @@
 
 ### 合规关注
 - 中国：《人工智能拟人化互动服务管理暂行办法》（2026-07-15 施行）：AI 身份标识、未成年人虚拟亲密关系禁令、防情感依赖；未成年人网络保护指南草案（征求意见至 10-17）
-- 美国：加州 SB 243、纽约州披露法
+- 美国：加州 SB 243、纽约州披露法、多州限制 AI 治疗师定位
 - 欧盟：EU AI Act（2026-08 全面执行）
+
+### 用户反馈 → 设计映射（2026-09）
+- FB-2026-09-01 日记趣味性不足 → Gameplay（情绪花园 / streak / 成就）
+- FB-2026-09-02 导入无引导 → ImportGuide（三步向导 / 来源模板 / 示例数据）
+- FB-2026-09-03 陪伴定位思考 → CompanionMode（AI 即时 + 真人可选，边界清晰，无成瘾设计）
 
 ## 未来实体（Roadmap 引入）
 
@@ -52,3 +68,6 @@
 - Feature: LocalLLM（Ollama / LM Studio 接入）
 - Feature: DataExport / DataClear
 - Feature: MinorMode（未成年人模式，含 AI 身份标识与防依赖设计）
+- Feature: Gameplay（游戏化日记：情绪花园 / 养成 / streak / 成就）
+- Feature: ImportGuide（导入引导：三步向导 / 来源模板 / 示例数据）
+- Feature: CompanionMode（AI + 可选真人混合陪伴，长期探索）
