@@ -15,7 +15,7 @@ A local-first mental health companion and health data journal. All data stays on
 
 ## Tech Stack
 
-- React 18 + TypeScript 5 + Vite 5
+- React 18 + TypeScript 5 + Vite 7
 - Tailwind CSS 3 + recharts
 - Electron (Windows / macOS / Linux desktop)
 - Capacitor 6 (Android / iOS mobile)
