@@ -13,7 +13,7 @@ export type HealthMetricType =
 /** Data provenance, useful for tracing. */
 export type HealthSource =
   | 'csv' | 'json' | 'manual'
-  | 'healthconnect' | 'healthkit' | 'huawei';
+  | 'healthconnect' | 'healthkit' | 'huawei' | 'windows';
 
 export interface HealthSample {
   id: string;
