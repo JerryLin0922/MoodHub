@@ -14,8 +14,9 @@
 | Standard | PHQ-9 / GAD-7 |
 | DataStore | localStorage / sessionStorage |
 | AIProvider | DeepSeek / Qwen / Tencent Hunyuan / Gemini / OpenAI / Custom(OpenAI-compatible) |
-| Doc | README / RESEARCH-2026 / ROADMAP-2026 / ANDROID / HARMONY |
+| Doc | README / RESEARCH-2026 / ROADMAP-2026 / FIRST-PRINCIPLES / ANDROID / HARMONY |
 | Risk | 危机信号 / 数据隐私 / 未成年人合规 |
+| Regulation | CAC 拟人化互动服务办法（2026-07-15 施行）/ 加州 SB 243 / EU AI Act / 香港三层应急机制 |
 
 ## 核心关系
 
@@ -27,6 +28,7 @@
 - TreeHole --local--> 危机识别规则引擎（不走 AI，不发网络请求）
 - MoodHub --documents--> Doc
 - MoodHub --mitigates--> Risk
+- MoodHub --compliesWith--> Regulation（未成年人模式 / AI 身份标识 / 防依赖设计）
 
 ## 领域知识映射
 
@@ -39,7 +41,7 @@
 - 识别 → 本地资源卡（12356 / 18111 / 988 等）→ 不上报、不发网络请求
 
 ### 合规关注
-- 中国：未成年人 AI 服务限制（2026 草案）、虚拟陪伴禁令（2026-04）
+- 中国：《人工智能拟人化互动服务管理暂行办法》（2026-07-15 施行）：AI 身份标识、未成年人虚拟亲密关系禁令、防情感依赖；未成年人网络保护指南草案（征求意见至 10-17）
 - 美国：加州 SB 243、纽约州披露法
 - 欧盟：EU AI Act（2026-08 全面执行）
 
@@ -49,4 +51,4 @@
 - Feature: PeriodicReport（周期回顾报告）
 - Feature: LocalLLM（Ollama / LM Studio 接入）
 - Feature: DataExport / DataClear
-- Feature: MinorMode（未成年人模式）
+- Feature: MinorMode（未成年人模式，含 AI 身份标识与防依赖设计）
