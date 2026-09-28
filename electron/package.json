@@ -13,10 +13,17 @@
     "electron": "^32.0.0",
     "electron-builder": "^25.0.5"
   },
+  "scripts": {
+    "pack:win:arm64": "npx electron-builder --win nsis portable --arm64",
+    "pack:win:x64": "npx electron-builder --win nsis portable --x64",
+    "pack:win:ia32": "npx electron-builder --win nsis portable --ia32",
+    "pack:mac": "npx electron-builder --mac dmg zip",
+    "pack:linux": "npx electron-builder --linux AppImage deb"
+  },
   "build": {
     "appId": "com.moodhub.app",
     "productName": "MoodHub",
-    "files": ["main.js", "../dist/**/*"],
+    "files": ["main.js", "preload.js", "health-ipc.js", "health-winrt.ps1", "native/**/*", "../dist/**/*"],
     "directories": {
       "output": "../release",
       "buildResources": "../build"

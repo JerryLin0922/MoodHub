@@ -1,5 +1,6 @@
 const { app, BrowserWindow, shell } = require('electron');
 const path = require('path');
+const { registerHealthIpc } = require('./health-ipc');
 
 const isDev = !app.isPackaged;
 const DEV_URL = process.env.VITE_DEV_URL || 'http://localhost:5173';
@@ -37,6 +38,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  registerHealthIpc();
   createWindow();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
