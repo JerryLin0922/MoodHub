@@ -21,7 +21,7 @@
 
 ## 技术栈
 
-- React 18 + TypeScript 5 + Vite 5
+- React 18 + TypeScript 5 + Vite 7
 - Tailwind CSS 3 + recharts
 - Electron（Windows / macOS / Linux 桌面）
 - Capacitor 6（Android / iOS 移动端）
