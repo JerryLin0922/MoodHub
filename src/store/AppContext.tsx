@@ -17,7 +17,7 @@ import type {
 } from '../core/types';
 import { aggregateDaily } from '../core/aggregate';
 import { buildReply } from '../core/rules/treehole';
-import { storage, installUnloadFlush } from '../data/storage';
+import { storage, installUnloadFlush, DEFAULT_AI_SETTINGS } from '../data/storage';
 import { chatWithAI, isAIConfigured } from '../data/ai';
 
 export interface AppState {
@@ -30,7 +30,11 @@ export interface AppState {
   addSamples: (s: HealthSample[]) => void;
   deleteSample: (id: string) => void;
   saveMood: (m: Omit<MoodEntry, 'updatedAt'>) => void;
+  /** 批量导入心情（按日期 upsert，Daylio 导入使用）。 */
+  importMoods: (entries: Omit<MoodEntry, 'updatedAt'>[]) => void;
   saveAI: (s: AISettings) => void;
+  /** 清空本机全部数据（日记 / 健康样本 / 树洞记录 / AI 设置与 Key）。 */
+  clearAll: () => void;
 
   sendMessage: (text: string) => Promise<void>;
 }
@@ -125,6 +129,33 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     [samples]
   );
+
+  const importMoods = useCallback(
+    (entries: Omit<MoodEntry, 'updatedAt'>[]) => {
+      setMoods(prev => {
+        const map = new Map(prev.map(m => [m.date, m]));
+        const now = new Date().toISOString();
+        for (const e of entries) {
+          map.set(e.date, { ...e, updatedAt: now });
+        }
+        const merged = [...map.values()];
+        storage.save({ samples, moods: merged, chat: chatRef.current });
+        return merged;
+      });
+    },
+    [samples]
+  );
+
+  const clearAll = useCallback(() => {
+    setSamples([]);
+    setMoods([]);
+    setChat([]);
+    setAI({ ...DEFAULT_AI_SETTINGS });
+    storage.clear();
+    storage.saveAI({ ...DEFAULT_AI_SETTINGS });
+    // 立即落空状态，避免残留 pending 写回旧数据。
+    storage.saveNow({ samples: [], moods: [], chat: [] });
+  }, []);
 
   const saveAI = useCallback(
     (s: AISettings) => {
@@ -237,10 +268,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addSamples,
       deleteSample,
       saveMood,
+      importMoods,
       saveAI,
+      clearAll,
       sendMessage,
     }),
-    [samples, moods, chat, daily, ai, addSamples, deleteSample, saveMood, saveAI, sendMessage]
+    [samples, moods, chat, daily, ai, addSamples, deleteSample, saveMood, importMoods, saveAI, clearAll, sendMessage]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
