@@ -3,16 +3,21 @@ import { useApp } from '../store/AppContext';
 import { usePrefs } from '../store/PrefsContext';
 import { PROVIDER_PRESETS, getPreset } from '../data/aiProviders';
 import { DEFAULT_AI_SETTINGS } from '../data/storage';
-import { buildExportBundle, moodsToCSV, samplesToCSV, downloadBlob } from '../core/export';
+import { buildExportBundle, moodsToCSV, samplesToCSV, downloadBlob, type ExportBundle } from '../core/export';
+import { encryptBackupJSON, decryptBackupJSON } from '../core/crypto';
 import type { AISettings } from '../core/types';
 
 export default function Settings() {
-  const { ai, saveAI, samples, moods, chat, clearAll } = useApp();
+  const { ai, saveAI, samples, moods, chat, clearAll, restoreAll } = useApp();
   const { prefs, update } = usePrefs();
   const [s, setS] = useState<AISettings>({ ...ai });
   const [saved, setSaved] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const [dataTip, setDataTip] = useState('');
+  const [showEncBackup, setShowEncBackup] = useState(false);
+  const [encPass, setEncPass] = useState('');
+  const [encTip, setEncTip] = useState('');
+  const [encBusy, setEncBusy] = useState(false);
 
   const preset = getPreset(s.providerId);
 
@@ -25,6 +30,56 @@ export default function Settings() {
     e.preventDefault();
     saveAI(s);
     setSaved(true);
+  }
+
+  async function encExport() {
+    if (!encPass) return;
+    setEncBusy(true);
+    try {
+      const bundle = buildExportBundle({ samples, moods, chat, ai });
+      const payload = await encryptBackupJSON(bundle, encPass);
+      downloadBlob(
+        `moodhub-enc-backup-${new Date().toISOString().slice(0, 10)}.enc`,
+        payload,
+        'application/octet-stream'
+      );
+      setEncTip('已加密导出（.enc 文件）。');
+    } catch (err) {
+      setEncTip('加密导出失败：' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setEncBusy(false);
+    }
+  }
+
+  async function encRestore(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    if (!encPass) {
+      setEncTip('请先输入备份口令。');
+      return;
+    }
+    setEncBusy(true);
+    try {
+      const payload = await file.text();
+      const data = (await decryptBackupJSON(payload, encPass)) as Partial<ExportBundle>;
+      if (!data || !Array.isArray(data.samples) || !Array.isArray(data.moods) || !Array.isArray(data.chat)) {
+        throw new Error('备份内容结构不完整');
+      }
+      const aiSettings: AISettings = { ...DEFAULT_AI_SETTINGS, ...(data.ai ?? {}) };
+      restoreAll({
+        samples: data.samples,
+        moods: data.moods,
+        chat: data.chat,
+        ai: aiSettings,
+      });
+      setS(aiSettings);
+      setEncTip('已恢复加密备份。');
+    } catch (err) {
+      setEncTip('恢复失败：' + (err instanceof Error ? err.message : '口令错误或文件损坏'));
+    } finally {
+      setEncBusy(false);
+    }
   }
 
   return (
@@ -150,8 +205,23 @@ export default function Settings() {
         </div>
       </section>
 
-      {/* ===== AI settings (unchanged behavior) ===== */}
-      <section className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-card border border-slate-100 dark:border-slate-700">
+      {/* ===== AI settings (未成年人模式下隐藏并强制纯本地记录) ===== */}
+      {prefs.minorMode ? (
+        <section className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-card border border-slate-100 dark:border-slate-700">
+          <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-3">AI 回复设置</h2>
+          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed bg-brand-50 dark:bg-slate-700/60 rounded-xl px-3 py-2">
+            未成年人模式已开启：为遵守《人工智能拟人化互动服务管理暂行办法》与未成年人网络保护要求，
+            本模式仅提供纯本地记录与规则回复，不包含 AI 陪伴式交互。如你已满 18 周岁，可重新验证年龄。
+          </p>
+          <button
+            onClick={() => update({ ageVerified: false, minorMode: false })}
+            className="mt-3 w-full rounded-full border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-300 py-2 text-sm hover:bg-slate-50 dark:hover:bg-slate-700"
+          >
+            重新验证年龄
+          </button>
+        </section>
+      ) : (
+        <section className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-card border border-slate-100 dark:border-slate-700">
         <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-3">AI 回复设置</h2>
 
         <form onSubmit={submitAI} className="space-y-4">
@@ -180,26 +250,30 @@ export default function Settings() {
             </select>
           </label>
 
-          <label className="block text-xs text-slate-500 dark:text-slate-400">
-            API Key
-            <input
-              type="password"
-              value={s.apiKey}
-              onChange={e => updateAI({ apiKey: e.target.value })}
-              placeholder={preset?.keyPlaceholder ?? '输入 API Key'}
-              className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 px-3 py-2 text-sm"
-            />
-          </label>
+          {!preset?.isLocal && (
+            <>
+              <label className="block text-xs text-slate-500 dark:text-slate-400">
+                API Key
+                <input
+                  type="password"
+                  value={s.apiKey}
+                  onChange={e => updateAI({ apiKey: e.target.value })}
+                  placeholder={preset?.keyPlaceholder ?? '输入 API Key'}
+                  className="mt-1 w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 px-3 py-2 text-sm"
+                />
+              </label>
 
-          <label className="flex items-center justify-between text-sm">
-            <span>在本机保存 Key（否则仅本次会话有效）</span>
-            <input
-              type="checkbox"
-              checked={s.persistKey}
-              onChange={e => updateAI({ persistKey: e.target.checked })}
-              className="h-4 w-4 accent-brand-600"
-            />
-          </label>
+              <label className="flex items-center justify-between text-sm">
+                <span>在本机保存 Key（否则仅本次会话有效）</span>
+                <input
+                  type="checkbox"
+                  checked={s.persistKey}
+                  onChange={e => updateAI({ persistKey: e.target.checked })}
+                  className="h-4 w-4 accent-brand-600"
+                />
+              </label>
+            </>
+          )}
 
           <label className="block text-xs text-slate-500 dark:text-slate-400">
             自定义 Base URL（留空用预设）
@@ -248,7 +322,8 @@ export default function Settings() {
             </p>
           )}
         </form>
-      </section>
+        </section>
+      )}
 
       {/* ===== Data management (导出 / 清空, 对应 ROADMAP 阶段一) ===== */}
       <section className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-card border border-slate-100 dark:border-slate-700">
@@ -304,6 +379,58 @@ export default function Settings() {
             {dataTip}
           </p>
         )}
+
+        <div className="border-t border-slate-100 dark:border-slate-700 pt-4 mt-2">
+          <button
+            onClick={() => setShowEncBackup(v => !v)}
+            className="w-full rounded-full border border-brand-300 dark:border-brand-700 text-brand-700 dark:text-brand-200 py-2 text-sm hover:bg-brand-50 dark:hover:bg-slate-700"
+          >
+            {showEncBackup ? '收起加密备份（实验性 · E2EE）' : '加密备份（实验性 · E2EE）'}
+          </button>
+          {showEncBackup && (
+            <div className="mt-3 space-y-3">
+              <p className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed">
+                用口令在本地加密全部数据（PBKDF2-SHA256 + AES-256-GCM），导出的 .enc
+                文件可存放在任何位置；恢复时需要同一口令。口令不会被保存或上传，忘记口令将无法恢复。
+              </p>
+              <input
+                type="password"
+                value={encPass}
+                onChange={e => setEncPass(e.target.value)}
+                placeholder="设置 / 输入备份口令"
+                className="w-full rounded-lg border border-slate-200 dark:border-slate-600 dark:bg-slate-700 px-3 py-2 text-sm"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={encExport}
+                  disabled={encBusy || !encPass}
+                  className="flex-1 rounded-full bg-brand-600 text-white py-2 text-sm disabled:opacity-40 hover:bg-brand-700"
+                >
+                  加密导出
+                </button>
+                <label className="flex-1">
+                  <span className="block rounded-full border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 py-2 text-sm text-center cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700">
+                    加密恢复
+                  </span>
+                  <input type="file" accept=".enc,application/json" className="sr-only" onChange={encRestore} />
+                </label>
+              </div>
+              {encTip && (
+                <p
+                  role="status"
+                  className={
+                    'text-xs rounded-xl px-3 py-2 ' +
+                    (encTip.startsWith('已')
+                      ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-900/40 dark:text-emerald-400'
+                      : 'text-red-600 bg-red-50 dark:bg-red-900/40 dark:text-red-400')
+                  }
+                >
+                  {encTip}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
           {!confirmClear ? (

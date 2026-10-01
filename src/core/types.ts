@@ -93,6 +93,8 @@ export interface AIProviderPreset {
   docsUrl: string;
   keyPlaceholder: string;
   note?: string;
+  /** Local providers (Ollama / LM Studio) run fully offline; no API key needed. */
+  isLocal?: boolean;
 }
 
 export interface AISettings {

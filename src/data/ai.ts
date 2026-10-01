@@ -3,7 +3,15 @@ import { getPreset } from './aiProviders';
 import { detectCrisis } from '../core/rules/treehole';
 
 export function isAIConfigured(ai: AISettings): boolean {
-  return ai.enabled && !!ai.apiKey.trim();
+  if (!ai.enabled) return false;
+  const preset = getPreset(ai.providerId);
+  // Local providers (Ollama / LM Studio) run fully offline without a key.
+  if (preset?.isLocal) {
+    const baseUrl = ai.baseUrl.trim() || preset.baseUrl;
+    const model = ai.model.trim() || preset.defaultModel;
+    return !!baseUrl && !!model;
+  }
+  return !!ai.apiKey.trim();
 }
 
 interface ChatPayload {
@@ -37,7 +45,8 @@ function buildMessages(userText: string, history: ChatMessage[]): ChatPayload['m
     '你是一个温暖、克制的心理陪伴助手。' +
     '规则：1) 不诊断、不处方、不说教；2) 回复 2-4 句话，口语化；3) ' +
     '若用户出现自杀/自残等危机信号，必须优先建议联系专业心理援助热线（12356 等），' +
-    '不要试图替代专业帮助；4) 用户数据仅在本机使用。';
+    '不要试图替代专业帮助；4) 用户数据仅在本机使用；5) 不做过度迎合、不诱导用户持续停留，' +
+    '对话自然收尾，可适时建议休息或做点别的事；6) 不承诺陪伴连续性，不扮演亲密关系。';
 
   const messages = history
     .slice(-8)
@@ -91,10 +100,10 @@ async function callOpenAICompatible(
 
   const res = await fetchWithTimeout(url, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
+    headers:
+      apiKey.trim()
+        ? { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` }
+        : { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
 
