@@ -71,6 +71,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const chatRef = useRef(chat);
   chatRef.current = chat;
+  const samplesRef = useRef(samples);
+  samplesRef.current = samples;
+  const moodsRef = useRef(moods);
+  moodsRef.current = moods;
 
   // Initial load from localStorage.
   useEffect(() => {
@@ -83,8 +87,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Throttled persistence + unload flush.
   useEffect(() => {
     const cleanup = installUnloadFlush(() => ({
-      samples,
-      moods,
+      samples: samplesRef.current,
+      moods: moodsRef.current,
       chat: chatRef.current,
     }));
     return cleanup;
@@ -188,12 +192,17 @@ export function AppProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  /** Persist the current dataset; moods are captured via closure. */
+  /** Persist the current dataset; reads latest state via refs so an in-flight
+   *  AI request can never overwrite mood/sample writes made while awaiting. */
   const persist = useCallback(
     (messages: ChatMessage[]) => {
-      storage.save({ samples, moods, chat: messages });
+      storage.save({
+        samples: samplesRef.current,
+        moods: moodsRef.current,
+        chat: messages,
+      });
     },
-    [samples, moods]
+    []
   );
 
   const sendMessage = useCallback(
@@ -213,7 +222,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       persist(history);
 
       // 1) Rule engine always runs first and stays authoritative for crisis.
-      const rule = buildReply(trimmed, aggregateDaily(samples));
+      const rule = buildReply(trimmed, aggregateDaily(samplesRef.current));
 
       // 2) If crisis, do NOT call the AI at all.
       if (rule.crisis) {
