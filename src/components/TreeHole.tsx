@@ -1,10 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
 import { useApp } from '../store/AppContext';
+import { usePrefs } from '../store/PrefsContext';
+import { HUMAN_SUPPORT_CHANNELS } from '../core/support';
+import type { CrisisResource } from '../core/types';
+
+/** AI 身份标识：周期性提醒（每天首次进入树洞且启用 AI 时提示一次）。 */
+const AI_NOTICE_KEY = 'moodhub.aiNoticedDate';
+function aiNoticedToday(): boolean {
+  return localStorage.getItem(AI_NOTICE_KEY) === new Date().toISOString().slice(0, 10);
+}
+function markAiNoticed() {
+  localStorage.setItem(AI_NOTICE_KEY, new Date().toISOString().slice(0, 10));
+}
 
 export default function TreeHole() {
   const { chat, sendMessage, ai } = useApp();
+  const { prefs } = usePrefs();
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
+  const [showAiNotice, setShowAiNotice] = useState(() => ai.enabled && !prefs.minorMode && !aiNoticedToday());
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -16,6 +30,11 @@ export default function TreeHole() {
     if (!t || sending) return;
     setSending(true);
     setText('');
+    // 已展示过 AI 身份标识提醒，标记今日已提示。
+    if (showAiNotice) {
+      markAiNoticed();
+      setShowAiNotice(false);
+    }
     try {
       await sendMessage(t);
     } finally {
@@ -28,10 +47,30 @@ export default function TreeHole() {
       <section className="bg-white dark:bg-slate-800 rounded-2xl p-4 shadow-card border border-slate-100 dark:border-slate-700">
         <h2 className="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-1">树洞</h2>
         <p className="text-xs text-slate-400 dark:text-slate-500">
-          {ai.enabled
-            ? '本地规则优先，AI 辅助回复；敏感内容 AI 不会绕过危机提示。'
-            : '当前为本地规则回复。可在「设置」中启用 AI 回复。'}
+          {prefs.minorMode
+            ? '未成年人模式：树洞仅在本机进行本地规则回复，不包含 AI 陪伴式交互。'
+            : ai.enabled
+              ? '本地规则优先，AI 辅助回复；敏感内容 AI 不会绕过危机提示。'
+              : '当前为本地规则回复。可在「设置」中启用 AI 回复。'}
         </p>
+        {showAiNotice && !prefs.minorMode && (
+          <p className="mt-2 text-[11px] text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-700/60 rounded-lg px-2 py-1.5 leading-relaxed">
+            AI 回复由 AI 生成，仅供参考，不构成医疗建议。
+          </p>
+        )}
+        <details className="mt-2 text-[11px] text-slate-400 dark:text-slate-500 bg-slate-50 dark:bg-slate-700/60 rounded-lg px-2 py-1.5">
+          <summary className="cursor-pointer select-none">真人支持渠道（可选升级路径）</summary>
+          <ul className="mt-1.5 space-y-0.5">
+            {HUMAN_SUPPORT_CHANNELS.map(r => (
+              <li key={r.name}>
+                {r.name}：{r.contact}
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1.5 leading-relaxed">
+            在树洞输入「想找真人聊聊」等，回复中也会附上这些渠道。
+          </p>
+        </details>
       </section>
 
       {/* aria-live: screen readers announce new assistant messages (可访问性规范). */}
@@ -57,9 +96,18 @@ export default function TreeHole() {
             return (
               <div key={m.id} className="flex justify-start">
                 <div className="max-w-[85%] rounded-2xl rounded-bl-sm bg-slate-100 dark:bg-slate-700 px-4 py-2.5 text-sm whitespace-pre-wrap dark:text-slate-100">
+                  <span
+                    className="mr-2 inline-flex items-center rounded-full bg-slate-200 dark:bg-slate-600 text-slate-500 dark:text-slate-300 px-2 py-0.5 text-[10px] font-medium"
+                    title="AI 生成内容，仅供参考，不构成医疗建议"
+                  >
+                    AI 生成
+                  </span>
                   {m.text}
                   {m.aiError && (
                     <p className="mt-1 text-xs text-red-400">AI 调用失败，已用本地规则回复。</p>
+                  )}
+                  {m.resources && m.resources.length > 0 && (
+                    <HumanSupportList resources={m.resources} />
                   )}
                 </div>
               </div>
@@ -112,6 +160,9 @@ export default function TreeHole() {
                     {m.followUp && (
                       <p className="text-xs text-slate-500 dark:text-slate-400 pt-1">{m.followUp}</p>
                     )}
+                    {m.resources && m.resources.length > 0 && (
+                      <HumanSupportList resources={m.resources} />
+                    )}
                   </div>
                 )}
               </div>
@@ -147,6 +198,24 @@ export default function TreeHole() {
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** 真人支持渠道卡：作为 AI + 真人混合陪伴的可选升级路径展示。 */
+function HumanSupportList({ resources }: { resources: CrisisResource[] }) {
+  return (
+    <div className="mt-2 rounded-xl bg-white/70 dark:bg-slate-800/80 border border-brand-200 dark:border-slate-600 px-3 py-2">
+      <p className="text-[11px] font-semibold text-brand-700 dark:text-brand-200 mb-1">
+        如需真人支持，可联系：
+      </p>
+      <ul className="text-xs text-slate-600 dark:text-slate-300 space-y-0.5">
+        {resources.map(r => (
+          <li key={r.name}>
+            {r.name}：{r.contact}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

@@ -15,13 +15,13 @@
   },
   "dependencies": {
     "@capacitor/android": "^6.2.2",
-    "@capacitor/core": "^6.1.2",
+    "@capacitor/core": "^6.2.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "recharts": "^2.12.7"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.1.2",
+    "@capacitor/cli": "^6.2.2",
     "@types/react": "^18.3.5",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
@@ -34,6 +34,6 @@
   },
   "overrides": {
     "esbuild": "^0.25.0",
-    "tar": "^7.5.21"
+    "tar": "^6.1.11"
   }
 }

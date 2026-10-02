@@ -19,6 +19,8 @@ import { aggregateDaily } from '../core/aggregate';
 import { buildReply } from '../core/rules/treehole';
 import { storage, installUnloadFlush, DEFAULT_AI_SETTINGS } from '../data/storage';
 import { chatWithAI, isAIConfigured } from '../data/ai';
+import { HUMAN_SUPPORT_CHANNELS, detectHumanSupportIntent } from '../core/support';
+import { usePrefs } from './PrefsContext';
 
 export interface AppState {
   samples: HealthSample[];
@@ -35,6 +37,13 @@ export interface AppState {
   saveAI: (s: AISettings) => void;
   /** 清空本机全部数据（日记 / 健康样本 / 树洞记录 / AI 设置与 Key）。 */
   clearAll: () => void;
+  /** 全量恢复（E2EE 加密备份恢复用）：覆盖本机全部数据并立即落盘。 */
+  restoreAll: (data: {
+    samples: HealthSample[];
+    moods: MoodEntry[];
+    chat: ChatMessage[];
+    ai: AISettings;
+  }) => void;
 
   sendMessage: (text: string) => Promise<void>;
 }
@@ -54,6 +63,7 @@ function nextId(prefix: string): string {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
+  const { prefs } = usePrefs();
   const [samples, setSamples] = useState<HealthSample[]>([]);
   const [moods, setMoods] = useState<MoodEntry[]>([]);
   const [chat, setChat] = useState<ChatMessage[]>([]);
@@ -165,6 +175,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  /** 全量恢复：覆盖本机全部数据并立即落盘（E2EE 备份恢复使用）。 */
+  const restoreAll = useCallback(
+    (data: { samples: HealthSample[]; moods: MoodEntry[]; chat: ChatMessage[]; ai: AISettings }) => {
+      setSamples(data.samples);
+      setMoods(data.moods);
+      setChat(data.chat);
+      setAI(data.ai);
+      storage.saveNow({ samples: data.samples, moods: data.moods, chat: data.chat });
+      storage.saveAI(data.ai);
+    },
+    []
+  );
+
   /** Persist the current dataset; moods are captured via closure. */
   const persist = useCallback(
     (messages: ChatMessage[]) => {
@@ -213,9 +236,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // 3) Otherwise try AI when configured.
+      // 3) Otherwise try AI when configured. Minor mode (未成年人模式) keeps
+      //    the tree hole strictly local: no AI companion replies at all.
+      // 4) 真人混合陪伴：用户主动寻求真人/人工支持时，附带可选的渠道引导。
+      const humanResources = detectHumanSupportIntent(trimmed)
+        ? HUMAN_SUPPORT_CHANNELS
+        : undefined;
+
       let reply: ChatMessage;
-      if (ai.enabled && isAIConfigured(ai)) {
+      if (!prefs.minorMode && ai.enabled && isAIConfigured(ai)) {
         try {
           const aiText = await chatWithAI(trimmed, history.slice(-8), ai);
           reply = {
@@ -224,6 +253,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             at: new Date().toISOString(),
             source: 'ai',
             text: aiText,
+            resources: humanResources,
           };
         } catch (e) {
           reply = {
@@ -234,6 +264,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
             empathy: rule.empathy,
             suggestions: rule.suggestions,
             followUp: rule.followUp,
+            resources: humanResources,
             aiError: e instanceof Error ? e.message : String(e),
           };
         }
@@ -246,6 +277,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           empathy: rule.empathy,
           suggestions: rule.suggestions,
           followUp: rule.followUp,
+          resources: humanResources,
         };
       }
 
@@ -253,7 +285,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setChat(messages);
       persist(messages);
     },
-    [ai, persist]
+    [ai, prefs.minorMode, persist]
   );
 
   const daily = useMemo(() => aggregateDaily(samples), [samples]);
@@ -271,9 +303,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       importMoods,
       saveAI,
       clearAll,
+      restoreAll,
       sendMessage,
     }),
-    [samples, moods, chat, daily, ai, addSamples, deleteSample, saveMood, importMoods, saveAI, clearAll, sendMessage]
+    [samples, moods, chat, daily, ai, addSamples, deleteSample, saveMood, importMoods, saveAI, clearAll, restoreAll, sendMessage]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
