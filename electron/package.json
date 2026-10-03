@@ -10,7 +10,7 @@
   "main": "main.js",
   "private": true,
   "devDependencies": {
-    "electron": "^32.0.0",
+    "electron": "^41.10.6",
     "electron-builder": "^25.0.5"
   },
   "build": {
