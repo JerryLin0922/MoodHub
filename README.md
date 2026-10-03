@@ -1,14 +1,3 @@
----
-AIGC:
-    Label: "1"
-    ContentProducer: 001191440300708461136T1XGW3
-    ProduceID: 01f8f8ba8e1924f80ffb2088ef932ff7_a94a5ff5b99f11f19ba1525400638852
-    ReservedCode1: IXhcE6wi529WqM0MDrPsTQGGo/ELnl0PTlhLC5HaItPGmL82Oph5O4byeELeiMnJUiwSS1L48PvBPuDgJc3SLnxPb8ZDSNx1YI5e9LoB4lBW8lhSMMqtAfsH+uhDSXqOCerr+T8vpshu2eH1SNAafx47HKKlB7P4B5lzpGI0vCuZVZ3H4nXMv6isIIc=
-    ContentPropagator: 001191440300708461136T1XGW3
-    PropagateID: 01f8f8ba8e1924f80ffb2088ef932ff7_a94a5ff5b99f11f19ba1525400638852
-    ReservedCode2: IXhcE6wi529WqM0MDrPsTQGGo/ELnl0PTlhLC5HaItPGmL82Oph5O4byeELeiMnJUiwSS1L48PvBPuDgJc3SLnxPb8ZDSNx1YI5e9LoB4lBW8lhSMMqtAfsH+uhDSXqOCerr+T8vpshu2eH1SNAafx47HKKlB7P4B5lzpGI0vCuZVZ3H4nXMv6isIIc=
----
-
 # MoodHub
 
 > [English](README_EN.md) | 中文
@@ -130,4 +119,3 @@ moodhub/
 ## License
 
 MIT
-*（内容由AI生成，仅供参考）*
