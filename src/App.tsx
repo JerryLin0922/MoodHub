@@ -5,8 +5,6 @@ import Tabs from './components/Tabs';
 import Overview from './components/Overview';
 import DataImport from './components/DataImport';
 import MoodDiary from './components/MoodDiary';
-import AgeGate from './components/AgeGate';
-import RestReminder from './components/RestReminder';
 
 // Code-split: the tree-hole screen pulls in recharts only there.
 const TreeHole = lazy(() => import('./components/TreeHole'));
@@ -150,8 +148,6 @@ function Shell() {
       </button>
 
       {locked && <LockScreen />}
-      <AgeGate />
-      <RestReminder />
     </div>
   );
 }

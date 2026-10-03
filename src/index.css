@@ -37,13 +37,3 @@ body {
   border-color: #444444 !important;
   box-shadow: none !important;
 }
-
-/* Mood garden: flower bloom animation (gamification, FB-2026-09-01). */
-@keyframes moodhub-bloom {
-  0% { transform: scale(0.2) rotate(-12deg); opacity: 0; }
-  60% { transform: scale(1.15) rotate(4deg); opacity: 1; }
-  100% { transform: scale(1) rotate(0deg); opacity: 1; }
-}
-.animate-bloom {
-  animation: moodhub-bloom 0.6s ease-out both;
-}

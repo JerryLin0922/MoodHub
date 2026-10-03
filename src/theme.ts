@@ -22,10 +22,7 @@ export interface AppPreferences {
   lockEnabled: boolean;
   lockPin: string; // 4-6 digits; empty means lock screen only asks to unlock.
   lockTimeoutMin: number; // default 15 minutes per design spec.
-  /** True once the user completed age verification (出生年份确认). */
-  ageVerified: boolean;
-  /** True for users under 18: local recording only, AI replies disabled. */
-  minorMode: boolean;
+  scl90Enabled: boolean; // user toggle for the SCL-90 test feature.
 }
 
 export const DEFAULT_PREFS: AppPreferences = {
@@ -36,8 +33,7 @@ export const DEFAULT_PREFS: AppPreferences = {
   lockEnabled: false,
   lockPin: '',
   lockTimeoutMin: 15,
-  ageVerified: false,
-  minorMode: false,
+  scl90Enabled: true,
 };
 
 const PREFS_KEY = 'moodhub.prefs';

@@ -66,6 +66,8 @@ export interface ChatMessage {
 
   /** User body, or assistant plain-text reply when source === 'ai'. */
   text?: string;
+  /** Images attached by the user (data URLs), tree-hole only. */
+  images?: string[];
   /** Where the assistant reply came from. */
   source?: 'rule' | 'ai';
   /** Structured fields only present when source === 'rule'. */
@@ -93,8 +95,6 @@ export interface AIProviderPreset {
   docsUrl: string;
   keyPlaceholder: string;
   note?: string;
-  /** Local providers (Ollama / LM Studio) run fully offline; no API key needed. */
-  isLocal?: boolean;
 }
 
 export interface AISettings {
