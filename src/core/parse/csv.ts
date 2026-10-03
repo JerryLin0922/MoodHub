@@ -30,11 +30,11 @@ const METRIC_RULES: MetricRule[] = [
     re: /心率(?!变异性)|heart[\s_-]*rate(?![\s_-]*var)/i,
     unit: 'bpm',
   },
-  { type: 'spo2',             re: /血氧|spo2|blood[\s_-]*oxygen|oxygen[\s_-]*saturation/i,               unit: '%' },
+  { type: 'spo2',             re: /血氧|spo2|blood[\s_-]*oxygen/i,                                       unit: '%' },
   { type: 'sleep_efficiency', re: /睡眠效率|sleep[\s_-]*efficiency/i,                                    unit: '%' },
-  { type: 'sleep_duration',   re: /睡眠时长|睡眠时间|sleep[\s_-]*(duration|time|analysis)|total[\s_-]*sleep|in[\s_-]*bed/i, unit: 'min' },
+  { type: 'sleep_duration',   re: /睡眠时长|睡眠时间|sleep[\s_-]*(duration|time)|total[\s_-]*sleep/i,   unit: 'min' },
   { type: 'stress',           re: /压力|stress/i,                                                        unit: 'score' },
-  { type: 'steps',            re: /步数|steps|step[\s_-]*count/i,                                        unit: '步' },
+  { type: 'steps',            re: /步数|steps/i,                                                         unit: '步' },
   { type: 'exercise_minutes', re: /运动时长|锻炼时长|exercise|active[\s_-]*min/i,                        unit: 'min' },
 ];
 
@@ -56,7 +56,7 @@ function detectDelimiter(headerLine: string): string {
 }
 
 /** CSV parser supporting comma / tab / semicolon delimiters and quoted fields. */
-export function parseDelimited(text: string): string[][] {
+function parseDelimited(text: string): string[][] {
   const clean = stripBOM(text);
   const firstLine = clean.split('\n')[0] ?? '';
   const delim = detectDelimiter(firstLine);
@@ -140,49 +140,7 @@ export function parseCSV(text: string, source: HealthSource = 'csv'): ParseResul
     }
   });
 
-  if (!columns.length) {
-    // 长表模式（Apple 健康 / 可穿戴设备导出）：表头含 type + value 列，
-    // 指标类型写在行值里（如 HKQuantityTypeIdentifierSleepAnalysis）。
-    const samples: HealthSample[] = [];
-    const typeIdx = headers.findIndex(h => /type|类型|kind|指标/i.test(h));
-    const valueIdx = headers.findIndex(h => /value|数值|值/i.test(h));
-    if (typeIdx < 0 || valueIdx < 0) {
-      throw new Error('未识别到任何健康指标列');
-    }
-
-    for (let r = 1; r < rows.length; r++) {
-      const ts = normalizeTs(rows[r][tsIdx]);
-      if (!ts) continue;
-
-      const typeName = String(rows[r][typeIdx] ?? '');
-      const rule = METRIC_RULES.find(x => x.re.test(typeName));
-      if (!rule) continue;
-
-      const raw = rows[r][valueIdx];
-      if (raw == null || String(raw).trim() === '') continue;
-      let v = parseFloat(String(raw).replace(/[^\d.\-]/g, ''));
-      if (!isFinite(v)) continue;
-
-      // 长表模式下睡眠时长按分钟计（Apple 导出），仅当单位列显式提示小时才转换。
-      const unitText = String(rows[r][valueIdx + 1] ?? '') + ' ' + typeName;
-      if (rule.type === 'sleep_duration' && /小时|hours?|\(h\)/i.test(unitText)) {
-        v *= 60;
-      }
-
-      samples.push({
-        id: uid(),
-        ts,
-        date: ts.slice(0, 10),
-        type: rule.type,
-        value: v,
-        unit: rule.unit,
-        source,
-      });
-    }
-
-    if (!samples.length) throw new Error('未识别到任何健康指标列');
-    return { samples, columns };
-  }
+  if (!columns.length) throw new Error('未识别到任何健康指标列');
 
   const samples: HealthSample[] = [];
 

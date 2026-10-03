@@ -16,39 +16,24 @@
   "build": {
     "appId": "com.moodhub.app",
     "productName": "MoodHub",
-    "files": [
-      "main.js",
-      "preload.js",
-      "../dist/**/*"
-    ],
+    "files": ["main.js", "../dist/**/*"],
     "directories": {
       "output": "../release",
       "buildResources": "../build"
     },
     "linux": {
-      "target": [
-        "AppImage",
-        "deb"
-      ],
+      "target": ["AppImage", "deb"],
       "category": "Utility",
       "maintainer": "MoodHub Dev <jerrylin0922@users.noreply.github.com>"
     },
     "win": {
-      "target": [
-        "nsis"
-      ],
-      "icon": "../build/icon.ico"
+      "target": ["nsis", "portable"],
+      "icon": "../build/icon.png"
     },
     "mac": {
-      "target": [
-        "dmg",
-        "zip"
-      ],
+      "target": ["dmg", "zip"],
       "icon": "../build/icon.png",
       "category": "public.app-category.healthcare-fitness"
     }
-  },
-  "dependencies": {
-    "fs-extra": "^8.1.0"
   }
 }

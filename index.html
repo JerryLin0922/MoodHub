@@ -8,16 +8,6 @@
       name="description"
       content="MoodHub — 本地优先的心理健康记录工具。数据不出本机，不做医疗诊断。"
     />
-    <!--
-      Content-Security-Policy: keep the app local-first by blocking third-party
-      scripts, frames, plugins and form posting. Inline styles are allowed for
-      Tailwind/vendors; network is restricted to the user-configured AI API and
-      local dev (ws for Vite HMR).
-    -->
-    <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' http: https: ws: wss:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
-    />
     <title>MoodHub</title>
   </head>
   <body>

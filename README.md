@@ -1,31 +1,34 @@
+---
+AIGC:
+    Label: "1"
+    ContentProducer: 001191440300708461136T1XGW3
+    ProduceID: 01f8f8ba8e1924f80ffb2088ef932ff7_a94a5ff5b99f11f19ba1525400638852
+    ReservedCode1: IXhcE6wi529WqM0MDrPsTQGGo/ELnl0PTlhLC5HaItPGmL82Oph5O4byeELeiMnJUiwSS1L48PvBPuDgJc3SLnxPb8ZDSNx1YI5e9LoB4lBW8lhSMMqtAfsH+uhDSXqOCerr+T8vpshu2eH1SNAafx47HKKlB7P4B5lzpGI0vCuZVZ3H4nXMv6isIIc=
+    ContentPropagator: 001191440300708461136T1XGW3
+    PropagateID: 01f8f8ba8e1924f80ffb2088ef932ff7_a94a5ff5b99f11f19ba1525400638852
+    ReservedCode2: IXhcE6wi529WqM0MDrPsTQGGo/ELnl0PTlhLC5HaItPGmL82Oph5O4byeELeiMnJUiwSS1L48PvBPuDgJc3SLnxPb8ZDSNx1YI5e9LoB4lBW8lhSMMqtAfsH+uhDSXqOCerr+T8vpshu2eH1SNAafx47HKKlB7P4B5lzpGI0vCuZVZ3H4nXMv6isIIc=
+---
+
 # MoodHub
 
 > [English](README_EN.md) | 中文
 
 本地优先的心理健康陪伴与健康数据记录工具。数据全部保存在本机，不上传任何服务器。
 
-> 免责声明：MoodHub 是自记录工具，不构成医疗诊断、治疗或处方建议。若你正处于心理危机中，请优先联系专业资源：
-> - 中国大陆：全国统一心理援助热线 **12356**，紧急情况拨打 **110 / 120**
-> - 中国香港：「情绪通」精神健康支援热线 **18111**（24 小时，电话 / WhatsApp）；赛马会青少年情绪健康网上支援平台「Open 噏」**9101 2012**（24 小时网上辅导）
-> - 美国 / 加拿大：**988**（24/7 免费危机热线，电话或短信）
-> - 全球：国际自杀预防协会（IASP）官网可查询所在地危机资源
+> 免责声明：MoodHub 是自记录工具，不构成医疗诊断、治疗或处方建议。若你正处于心理危机中，请优先联系专业资源（全国统一心理援助热线 12356，或紧急电话 110 / 120）。
 
 ## 功能
 
 - **总览**：最近 14 天睡眠 / 心情图表 + 指标明细表（睡眠、静息心率、HRV、压力、步数）
-- **日记**：按日记录心情（1-5）、压力、睡眠质量与备注，同日覆盖更新；规划引入游戏化设计（情绪花园、streak、成就），降低记录门槛、提升趣味性（详见 [FEEDBACK-2026.md](docs/FEEDBACK-2026.md)）
-- **导入**：CSV / JSON 健康数据导入（识别睡眠时长、睡眠效率、静息心率、心率、HRV、血氧、压力、步数、运动时长），支持手动添加；规划三步导入引导（来源模板、示例数据、预览确认），解决"数据从哪里来"的困惑
+- **日记**：按日记录心情（1-5）、压力、睡眠质量与备注，同日覆盖更新
+- **导入**：CSV / JSON 健康数据导入（识别睡眠时长、睡眠效率、静息心率、心率、HRV、血氧、压力、步数、运动时长），支持手动添加
 - **树洞**：本地规则引擎心理陪伴回复；识别危机信号时立即弹出求助资源卡，不走 AI
 - **AI 回复（可选）**：接入 DeepSeek / 通义千问 / 腾讯混元 / Gemini / OpenAI / 自定义兼容接口，API Key 可选持久化或仅会话有效
-- **真人支持渠道引导**：树洞检测到用户主动寻求真人 / 人工支持时，自动附带心理援助热线等渠道引导（本地意图识别，不发网络请求）
-- **休息提醒**：可配置的休息 / 用眼提醒，帮助建立健康使用节奏
-- **未成年人模式**：完成年龄验证后可开启；该模式下仅保留纯本地记录与规则回复，AI 陪伴式交互完全关闭（符合未成年人网络保护要求，可随时重新验证年龄）
-- **加密备份（E2EE，实验性）**：口令加密（PBKDF2-SHA256 + AES-256-GCM）导出 .enc 备份文件，可随时恢复；口令仅存于本机，忘记口令无法找回
 - **自评量表**：PHQ-9 / GAD-7 参考自评（内置，可在代码中开启）
 
 ## 技术栈
 
-- React 18 + TypeScript 5 + Vite 7
+- React 18 + TypeScript 5 + Vite 5
 - Tailwind CSS 3 + recharts
 - Electron（Windows / macOS / Linux 桌面）
 - Capacitor 6（Android / iOS 移动端）
@@ -89,31 +92,7 @@ Capacitor 官方不支持鸿蒙原生工程。可选路径：
 - 所有数据使用浏览器 localStorage / sessionStorage 保存在本机
 - 未启用 AI 时全程离线可用；启用 AI 后仅将最近 8 条树洞消息发送给你选择的模型服务商
 - API Key 可选持久化（localStorage）或仅会话有效（sessionStorage），可随时清除
-- 加密备份（E2EE）口令仅用于本地加解密，不保存、不上传
 - 无账号体系、无遥测、无第三方统计 SDK
-
-### 隐私设计对照（2026 行业基线）
-
-本地优先不是一句口号，而是与 2026 年行业审计结论直接对应的架构选择：
-
-- 2026 年对 25 款 Android 心理健康 App 的测量研究发现，**每一款**都内嵌了隐私政策未披露的追踪 SDK，68% 未披露至少一半的内嵌追踪器；
-- Mozilla 2024 年对 11 款主流 AI 陪伴 App 的审查全部给出「Privacy Not Included」警告；
-- 主流大模型 API 的滥用监控日志默认可能保留 prompt 与回复最多 30 天，除非签订零保留协议。
-
-MoodHub 的应对：**无任何第三方 SDK、无遥测、无账号、数据不出本机**；即使启用 AI，也只发送最近 8 条消息，并支持仅会话有效的 API Key。
-
-### 危机信号的本地处理
-
-树洞的危机识别与求助资源卡完全在本地规则引擎完成，**不走 AI、不发网络请求**，危机场景下不引入任何第三方依赖，保证求助路径最短、最可靠。
-
-## 研究与路线图
-
-- [2026 行业研究](docs/RESEARCH-2026.md)：本地优先心理健康 App 趋势、隐私合规（含《人工智能拟人化互动服务管理暂行办法》与 2026-09 美国州法快照）、青少年保护、市场数据、付费倾诉与 AI 陪伴商业化
-- [产品路线图](docs/ROADMAP-2026.md)：基于第一性原理与用户洞察的下一阶段规划
-- [用户反馈与设计方向](docs/FEEDBACK-2026.md)：2026-09 真实用户反馈（日记趣味性、导入引导、陪伴定位）与对应设计决策
-- [第一性原理与产品哲学](docs/FIRST-PRINCIPLES.md)：定位审视、惊喜点子、作者数字自我接入说明
-- [创意提案](docs/IDEA-2026.md)：基于行业研究、用户反馈与第一性原理产出的可落地创意清单（含优先级与验证方式）
-- [项目本体](docs/ONTOLOGY.md)：MoodHub 实体-关系结构化视图，便于协作与知识管理
 
 ## 发布到 GitHub
 
@@ -151,3 +130,4 @@ moodhub/
 ## License
 
 MIT
+*（内容由AI生成，仅供参考）*

@@ -11,6 +11,7 @@ import {
 import { useApp } from '../store/AppContext';
 import { usePrefs } from '../store/PrefsContext';
 import type { DailyAggregate } from '../core/types';
+import ScalePanel from './ScalePanel';
 
 const METRIC_META: { key: keyof DailyAggregate; label: string; fmt: (v: number) => string }[] = [
   { key: 'sleepDuration',     label: '睡眠时长', fmt: v => `${(v / 60).toFixed(1)} 小时` },
@@ -215,6 +216,8 @@ export default function Overview() {
           </div>
         )}
       </section>
+
+      <ScalePanel />
     </div>
   );
 }

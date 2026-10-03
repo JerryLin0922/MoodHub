@@ -17,10 +17,8 @@ import type {
 } from '../core/types';
 import { aggregateDaily } from '../core/aggregate';
 import { buildReply } from '../core/rules/treehole';
-import { storage, installUnloadFlush, DEFAULT_AI_SETTINGS } from '../data/storage';
+import { storage, installUnloadFlush } from '../data/storage';
 import { chatWithAI, isAIConfigured } from '../data/ai';
-import { HUMAN_SUPPORT_CHANNELS, detectHumanSupportIntent } from '../core/support';
-import { usePrefs } from './PrefsContext';
 
 export interface AppState {
   samples: HealthSample[];
@@ -32,20 +30,9 @@ export interface AppState {
   addSamples: (s: HealthSample[]) => void;
   deleteSample: (id: string) => void;
   saveMood: (m: Omit<MoodEntry, 'updatedAt'>) => void;
-  /** 批量导入心情（按日期 upsert，Daylio 导入使用）。 */
-  importMoods: (entries: Omit<MoodEntry, 'updatedAt'>[]) => void;
   saveAI: (s: AISettings) => void;
-  /** 清空本机全部数据（日记 / 健康样本 / 树洞记录 / AI 设置与 Key）。 */
-  clearAll: () => void;
-  /** 全量恢复（E2EE 加密备份恢复用）：覆盖本机全部数据并立即落盘。 */
-  restoreAll: (data: {
-    samples: HealthSample[];
-    moods: MoodEntry[];
-    chat: ChatMessage[];
-    ai: AISettings;
-  }) => void;
 
-  sendMessage: (text: string) => Promise<void>;
+  sendMessage: (text: string, images?: string[]) => Promise<void>;
 }
 
 const Ctx = createContext<AppState | null>(null);
@@ -63,7 +50,6 @@ function nextId(prefix: string): string {
 }
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const { prefs } = usePrefs();
   const [samples, setSamples] = useState<HealthSample[]>([]);
   const [moods, setMoods] = useState<MoodEntry[]>([]);
   const [chat, setChat] = useState<ChatMessage[]>([]);
@@ -71,10 +57,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const chatRef = useRef(chat);
   chatRef.current = chat;
-  const samplesRef = useRef(samples);
-  samplesRef.current = samples;
-  const moodsRef = useRef(moods);
-  moodsRef.current = moods;
 
   // Initial load from localStorage.
   useEffect(() => {
@@ -87,8 +69,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Throttled persistence + unload flush.
   useEffect(() => {
     const cleanup = installUnloadFlush(() => ({
-      samples: samplesRef.current,
-      moods: moodsRef.current,
+      samples,
+      moods,
       chat: chatRef.current,
     }));
     return cleanup;
@@ -144,33 +126,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     [samples]
   );
 
-  const importMoods = useCallback(
-    (entries: Omit<MoodEntry, 'updatedAt'>[]) => {
-      setMoods(prev => {
-        const map = new Map(prev.map(m => [m.date, m]));
-        const now = new Date().toISOString();
-        for (const e of entries) {
-          map.set(e.date, { ...e, updatedAt: now });
-        }
-        const merged = [...map.values()];
-        storage.save({ samples, moods: merged, chat: chatRef.current });
-        return merged;
-      });
-    },
-    [samples]
-  );
-
-  const clearAll = useCallback(() => {
-    setSamples([]);
-    setMoods([]);
-    setChat([]);
-    setAI({ ...DEFAULT_AI_SETTINGS });
-    storage.clear();
-    storage.saveAI({ ...DEFAULT_AI_SETTINGS });
-    // 立即落空状态，避免残留 pending 写回旧数据。
-    storage.saveNow({ samples: [], moods: [], chat: [] });
-  }, []);
-
   const saveAI = useCallback(
     (s: AISettings) => {
       setAI(s);
@@ -179,42 +134,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  /** 全量恢复：覆盖本机全部数据并立即落盘（E2EE 备份恢复使用）。 */
-  const restoreAll = useCallback(
-    (data: { samples: HealthSample[]; moods: MoodEntry[]; chat: ChatMessage[]; ai: AISettings }) => {
-      setSamples(data.samples);
-      setMoods(data.moods);
-      setChat(data.chat);
-      setAI(data.ai);
-      storage.saveNow({ samples: data.samples, moods: data.moods, chat: data.chat });
-      storage.saveAI(data.ai);
-    },
-    []
-  );
-
-  /** Persist the current dataset; reads latest state via refs so an in-flight
-   *  AI request can never overwrite mood/sample writes made while awaiting. */
+  /** Persist the current dataset; moods are captured via closure. */
   const persist = useCallback(
     (messages: ChatMessage[]) => {
-      storage.save({
-        samples: samplesRef.current,
-        moods: moodsRef.current,
-        chat: messages,
-      });
+      storage.save({ samples, moods, chat: messages });
     },
-    []
+    [samples, moods]
   );
 
   const sendMessage = useCallback(
-    async (text: string) => {
+    async (text: string, images?: string[]) => {
       const trimmed = text.trim();
-      if (!trimmed) return;
+      if (!trimmed && (!images || images.length === 0)) return;
 
       const userMsg: ChatMessage = {
         id: nextId('u'),
         role: 'user',
         at: new Date().toISOString(),
         text: trimmed,
+        images: images && images.length ? images : undefined,
       };
 
       const history = [...chatRef.current, userMsg];
@@ -222,7 +160,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       persist(history);
 
       // 1) Rule engine always runs first and stays authoritative for crisis.
-      const rule = buildReply(trimmed, aggregateDaily(samplesRef.current));
+      const rule = buildReply(trimmed, aggregateDaily(samples));
 
       // 2) If crisis, do NOT call the AI at all.
       if (rule.crisis) {
@@ -245,15 +183,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // 3) Otherwise try AI when configured. Minor mode (未成年人模式) keeps
-      //    the tree hole strictly local: no AI companion replies at all.
-      // 4) 真人混合陪伴：用户主动寻求真人/人工支持时，附带可选的渠道引导。
-      const humanResources = detectHumanSupportIntent(trimmed)
-        ? HUMAN_SUPPORT_CHANNELS
-        : undefined;
-
+      // 3) Otherwise try AI when configured.
       let reply: ChatMessage;
-      if (!prefs.minorMode && ai.enabled && isAIConfigured(ai)) {
+      if (ai.enabled && isAIConfigured(ai)) {
         try {
           const aiText = await chatWithAI(trimmed, history.slice(-8), ai);
           reply = {
@@ -262,7 +194,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
             at: new Date().toISOString(),
             source: 'ai',
             text: aiText,
-            resources: humanResources,
           };
         } catch (e) {
           reply = {
@@ -273,7 +204,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
             empathy: rule.empathy,
             suggestions: rule.suggestions,
             followUp: rule.followUp,
-            resources: humanResources,
             aiError: e instanceof Error ? e.message : String(e),
           };
         }
@@ -286,7 +216,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           empathy: rule.empathy,
           suggestions: rule.suggestions,
           followUp: rule.followUp,
-          resources: humanResources,
         };
       }
 
@@ -294,7 +223,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setChat(messages);
       persist(messages);
     },
-    [ai, prefs.minorMode, persist]
+    [ai, persist]
   );
 
   const daily = useMemo(() => aggregateDaily(samples), [samples]);
@@ -309,13 +238,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       addSamples,
       deleteSample,
       saveMood,
-      importMoods,
       saveAI,
-      clearAll,
-      restoreAll,
       sendMessage,
     }),
-    [samples, moods, chat, daily, ai, addSamples, deleteSample, saveMood, importMoods, saveAI, clearAll, restoreAll, sendMessage]
+    [samples, moods, chat, daily, ai, addSamples, deleteSample, saveMood, saveAI, sendMessage]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
